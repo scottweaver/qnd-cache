@@ -9,17 +9,11 @@ Gem::Specification.new do |gem|
   gem.homepage      = "https://github.com/scottweaver/qnd-cache"
 
 
-  gem.add_dependency 'yaml' 
-
-  gem.add_development_dependency('yaml')
   gem.add_development_dependency('rspec')
   gem.add_development_dependency('guard-rspec')
   gem.add_development_dependency('rb-inotify')
   gem.add_development_dependency('libnotify')
-  gem.add_development_dependency('ruby-debug')
-   
-
-
+  
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
