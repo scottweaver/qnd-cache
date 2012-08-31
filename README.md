@@ -8,7 +8,7 @@ Why QuickAndDirty Cache
 Because all the Ruby cache projects I found where either unmaintained or depended on another cache mechanism
 such as memcached or some NoSQL DB.  While these are great options they aren't for everyone, especially if you
 work in a large enterprise environment where getting 3rd party software installed on
-servers is like pulling is like pulling teeth. 
+servers is like pulling teeth. 
 
 Installation
 ============
@@ -36,8 +36,8 @@ Directly Accessing the Cache
 	qnd[:foo] = 'foo'
 	foo = qnd[:foo]
 
-Using 'will_cache' Transparently Cache Code
--------------------------------------------
+Using 'will_cache' to Transparently Cache Code
+----------------------------------------------
 
 	qnd = QuickAndDirtyCache::Cache.new("default")
 	qnd.will_cache('cache key') do
