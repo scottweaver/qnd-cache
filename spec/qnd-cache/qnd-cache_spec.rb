@@ -8,7 +8,7 @@ describe QuickAndDirtyCache::Cache do
 
 		qnd.size.should eq 0
 		qnd.hits.length.should eq 0
-		result = qnd.fetch('foo') do 
+		result = qnd.will_cache('foo') do 
 			call_count += 1
 			'bar'
 		end
@@ -17,11 +17,11 @@ describe QuickAndDirtyCache::Cache do
 		call_count.should eq 1
 		result.should eq 'bar'
 
-		result = qnd.fetch('foo') do 
+		result = qnd.will_cache('foo') do 
 			call_count += 1
 			'bar'
 		end
-		result.should eq 'bar'
+		resTlt.should eq 'bar'
 		qnd.hits.length.should eq 1
 		call_count.should eq 1
 		qnd.size.should eq 1
@@ -31,7 +31,7 @@ describe QuickAndDirtyCache::Cache do
 		qnd = QuickAndDirtyCache::Cache.new "default"
 
 		test ="foobar"
-		result = qnd.fetch('foo') do 
+		result = qnd.will_cache('foo') do 
 			test
 		end
 		
@@ -42,17 +42,17 @@ describe QuickAndDirtyCache::Cache do
 		qnd = QuickAndDirtyCache::Cache.new "default"
 
 		test ="foobar"
-		qnd.fetch('foo') do 
+		qnd.will_cache('foo') do 
 			test
 		end
 
 		test.qnd_metadata[:hits].should eq 0
-		qnd.fetch('foo') do 
+		qnd.will_cache('foo') do 
 			test
 		end
 
 		test.qnd_metadata[:hits].should eq 1
-		qnd.fetch('foo') do 
+		qnd.will_cache('foo') do 
 			test
 		end
 
@@ -63,13 +63,13 @@ describe QuickAndDirtyCache::Cache do
 		qnd = QuickAndDirtyCache::Cache.new("default", max_in_memory_objects: 1)
 
 		qnd.size.should eq 0
-		qnd.fetch(:foo)  do
+		qnd.will_cache(:foo)  do
 			"foo"
 		end
 
 		qnd.dump.include?(:foo).should be true
 		qnd.size.should eq 1
-		qnd.fetch(:bar)  do
+		qnd.will_cache(:bar)  do
 			"bar"
 		end
 

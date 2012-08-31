@@ -57,7 +57,7 @@ module QuickAndDirtyCache
 
 		def []=(key, value)
 			delete key
-			fetch(key) do
+			will_cache(key) do
 				value
 			end
 		end
@@ -93,7 +93,7 @@ module QuickAndDirtyCache
 			object
 		end
 
-		def fetch(key, &block)
+		def will_cache(key, &block)
 			object = self[key]
 
 			if !object
