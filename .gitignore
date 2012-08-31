@@ -1,0 +1,5 @@
+bin_stubs/*
+bundler_stubs/*
+coverage.data
+coverage/
+.rdebugrc
