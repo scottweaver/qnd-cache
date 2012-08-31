@@ -21,7 +21,7 @@ describe QuickAndDirtyCache::Cache do
 			call_count += 1
 			'bar'
 		end
-		resTlt.should eq 'bar'
+		result.should eq 'bar'
 		qnd.hits.length.should eq 1
 		call_count.should eq 1
 		qnd.size.should eq 1
