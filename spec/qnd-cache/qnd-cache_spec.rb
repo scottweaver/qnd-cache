@@ -155,3 +155,25 @@ describe QuickAndDirtyCache do
 	end
 	
 end
+
+describe QuickAndDirtyCache::CacheLogger do 
+	it "should allow for setting an alternate logger" do
+		class LogMock
+			attr_reader :message
+			def info(message)
+				@message = message	
+			end
+		end
+		mock = LogMock.new
+		QuickAndDirtyCache::CacheLogger.logger = mock
+		class LogTest
+			include QuickAndDirtyCache::CacheLogger
+
+			def initialize()
+			    logger.info 'test'
+			end
+		end
+		LogTest.new
+		mock.message.should eq 'test'
+	end	
+end

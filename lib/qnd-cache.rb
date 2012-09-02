@@ -14,8 +14,18 @@ module QuickAndDirtyCache
 		ttl: 3600  # time to live (in seconds) for objects 
 	}
 	
-	@@caches = {}
-	LOGGER = Logger.new STDOUT
+	@@caches = {}	
+	
+	module CacheLogger
+		def self.logger=(logger)
+			CacheLogger.const_set(:LOGGER, logger) 
+		end
+
+		def logger
+			CacheLogger.const_set(:LOGGER, Logger.new(STDOUT)) unless defined?(LOGGER)
+			LOGGER
+		end
+	end
 
 	def self.cache(cache_name, settings={})
 		@@caches[cache_name] = Cache.new(settings) unless @@caches.include? cache_name
@@ -23,6 +33,8 @@ module QuickAndDirtyCache
 	end
 
 	class Cache
+		include QuickAndDirtyCache::CacheLogger
+
 		attr_reader :name, :hits, :primary_store, :secondary_store
 
 		def initialize(cache_name, settings={})
@@ -30,7 +42,7 @@ module QuickAndDirtyCache
 			@hits = []
 			@settings = DEFAULT_SETTINGS.merge(settings)
 			@spools_on_overflow = @settings[:spools_on_overflow]
-			LOGGER.info("#{cache_name} intiialized with the following settings: #{@settings}")
+			logger.info("#{cache_name} intiialized with the following settings: #{@settings}")
 			@primary_store = @settings[:primary_cache].new(settings) 
 			@lru_linked_list = []
 			@secondary_store = @settings[:secondary_cache].new(settings) if spools_on_overflow?		
@@ -65,7 +77,7 @@ module QuickAndDirtyCache
 		def [](key)
 			object = @primary_store.open do |store|
 				if store.include? key
-					LOGGER.info "#{key} found in primary cache."
+					logger.info "#{key} found in primary cache."
 					@lru_linked_list.unshift @lru_linked_list.delete(key)
 					object = store[key] 
 					object.qnd_metadata[:hits] += 1
@@ -75,7 +87,7 @@ module QuickAndDirtyCache
 
 			object = @secondary_store.open do |store|
 				if store.include? key
-					LOGGER.info "'#{key}' found in secondary cache #{store.inspect}."
+					logger.info "'#{key}' found in secondary cache #{store.inspect}."
 					@lru_linked_list.unshift key
 					object = store.delete key
 					if object
@@ -97,7 +109,7 @@ module QuickAndDirtyCache
 			object = self[key]
 	
 			if !object
-				LOGGER.info "'#{key}' not found in any cache. Creating cache entry with new object."
+				logger.info "'#{key}' not found in any cache. Creating cache entry with new object."
 				object = yield 
 				object.class.send(:attr_reader, :qnd_metadata) unless object.respond_to? :qnd_metadata
 				object.instance_variable_set("@qnd_metadata", {birthday: Time.now, hits: 0})
@@ -127,7 +139,7 @@ module QuickAndDirtyCache
 				stale = (bday + @settings[:ttl]) < Time.now
 				if stale
 					lru.delete(key) if lru
-					LOGGER.info "Pruning #{key} from the cache
+					logger.info "Pruning #{key} from the cache
 					 as its TTL (#{@settings[:ttl]} seconds) has been exceeded.  
 					 Current age #{Time.now - bday}.".gsub(/\s+/, " ").strip
 				end
@@ -159,7 +171,7 @@ module QuickAndDirtyCache
 			@primary_store.open do |store|
 				while store.length > @settings[:max_in_memory_objects]
 					key = @lru_linked_list.pop
-					LOGGER.debug "Removing oldest key '#{key}' from in-memory cache as  
+					logger.debug "Removing oldest key '#{key}' from in-memory cache as  
 					 as the 'max_in_memory_objects' of #{@settings[:max_in_memory_objects]} 
 					 has been exceeded.".gsub(/\s+/, " ").strip
 					temp[key] = store.delete key
@@ -170,7 +182,7 @@ module QuickAndDirtyCache
 			@secondary_store.open do |store|
 
 				temp.each do |key, value|					
-					LOGGER.debug "Spooling #{key} => #{value} to secondary cache."	
+					logger.debug "Spooling #{key} => #{value} to secondary cache."	
 
 					store[key] = value
 
