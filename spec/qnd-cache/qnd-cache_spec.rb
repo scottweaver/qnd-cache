@@ -4,6 +4,7 @@ require 'qnd-cache'
 describe QuickAndDirtyCache::Cache do
 	it "Should store items returned from the cached block" do
 		qnd = QuickAndDirtyCache::Cache.new "default"
+
 		call_count = 0
 
 		qnd.size.should eq 0
@@ -141,4 +142,16 @@ describe QuickAndDirtyCache::Cache do
 		qnd.include?(:bar).should be true
 	end
 
+end
+
+describe QuickAndDirtyCache do 
+	it "should keep a list of register caches and create new ones if they don't exist" do
+		cache = QuickAndDirtyCache.cache :default
+		cache.should_not be nil
+		cache2 = QuickAndDirtyCache.cache :default
+		cache2.should eq cache
+		cache3 = QuickAndDirtyCache.cache :new_cache
+		cache3.should_not eq cache
+	end
+	
 end

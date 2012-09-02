@@ -14,11 +14,12 @@ module QuickAndDirtyCache
 		ttl: 3600  # time to live (in seconds) for objects 
 	}
 	
-	@@cache_stores = []
+	@@caches = {}
 	LOGGER = Logger.new STDOUT
 
-	def self.register_cache_store(cache_store)
-		@@cache_stores << cache_store
+	def self.cache(cache_name, settings={})
+		@@caches[cache_name] = Cache.new(settings) unless @@caches.include? cache_name
+		@@caches[cache_name]
 	end
 
 	class Cache
@@ -32,8 +33,7 @@ module QuickAndDirtyCache
 			LOGGER.info("#{cache_name} intiialized with the following settings: #{@settings}")
 			@primary_store = @settings[:primary_cache].new(settings) 
 			@lru_linked_list = []
-			@secondary_store = @settings[:secondary_cache].new(settings) if spools_on_overflow?
-			QuickAndDirtyCache.register_cache_store self
+			@secondary_store = @settings[:secondary_cache].new(settings) if spools_on_overflow?		
 		end
 
 		def spools_on_overflow?
@@ -88,26 +88,23 @@ module QuickAndDirtyCache
 			end if !object && spools_on_overflow?
 			if object
 				@hits << {key: key, time: Time.now} 
-				clean_memory
+				sweep_memory
 			end
 			object
 		end
 
 		def will_cache(key, &block)
 			object = self[key]
-
+	
 			if !object
 				LOGGER.info "'#{key}' not found in any cache. Creating cache entry with new object."
 				object = yield 
-
 				object.class.send(:attr_reader, :qnd_metadata) unless object.respond_to? :qnd_metadata
 				object.instance_variable_set("@qnd_metadata", {birthday: Time.now, hits: 0})
-
 				@primary_store[key]=object
 				@lru_linked_list.unshift key
-				clean_memory
+				sweep_memory
 			end
-
 			object
 		end
 
@@ -118,11 +115,9 @@ module QuickAndDirtyCache
 				store.delete key
 			end
 
-
 			@secondary_store.open do |store|
 				store.delete key
 			end if spools_on_overflow? && !object
-
 			object
 		end
 		
@@ -156,11 +151,9 @@ module QuickAndDirtyCache
 			@primary_store.include?(key) || (spools_on_overflow? && @secondary_store.include?(key))
 		end
 
-		private 
-
 		# Attempts reduce size in-memory cache below the 'max_in_memory_objects'
 		# setting.
-		def clean_memory
+		def sweep_memory
 			temp = {}
 		
 			@primary_store.open do |store|
