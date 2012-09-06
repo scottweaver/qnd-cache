@@ -3,3 +3,4 @@ bundler_stubs/*
 coverage.data
 coverage/
 .rdebugrc
+pkg/
